@@ -29,7 +29,8 @@ library(kableExtra)
 
 ## About the Show
 
-![Breaking Bad title card — AMC (2008–2013)](https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Breaking_Bad_logo.svg/1280px-Breaking_Bad_logo.svg.png){fig-align="center" width="55%"}
+![Breaking Bad title card — AMC (2008–2013)](breaking_bad_logo.png){fig-align="center" width="55%"}
+
 
 *Breaking Bad* is an American crime drama television series created by *Vince Gilligan* that aired on *AMC* from January 20, 2008, to September 29, 2013. The series follows *Walter White* (Bryan Cranston), a struggling high-school chemistry teacher in Albuquerque, New Mexico, who is diagnosed with inoperable lung cancer. Together with his former student *Jesse Pinkman* (Aaron Paul), he enters the world of illegal drug manufacturing and distribution to secure his family's financial future.
 
