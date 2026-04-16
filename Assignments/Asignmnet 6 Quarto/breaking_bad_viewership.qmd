@@ -1,0 +1,255 @@
+---
+title: "Breaking Bad: Viewership Analysis"
+author: "Ashutosh Kumar Verma"
+date: today
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    number-sections: false
+    fig-align: center
+    df-print: kable
+    code-fold: false
+    smooth-scroll: true
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+library(scales)
+library(ggtext)
+library(knitr)
+library(kableExtra)
+```
+
+## About the Show
+
+![Breaking Bad title card — AMC (2008–2013)](https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Breaking_Bad_logo.svg/1280px-Breaking_Bad_logo.svg.png){fig-align="center" width="55%"}
+
+*Breaking Bad* is an American crime drama television series created by *Vince Gilligan* that aired on *AMC* from January 20, 2008, to September 29, 2013. The series follows *Walter White* (Bryan Cranston), a struggling high-school chemistry teacher in Albuquerque, New Mexico, who is diagnosed with inoperable lung cancer. Together with his former student *Jesse Pinkman* (Aaron Paul), he enters the world of illegal drug manufacturing and distribution to secure his family's financial future.
+
+The show ran for **five seasons** and **62 episodes** in total. It received widespread critical acclaim, with particular praise for its writing, directing, and performances. *Breaking Bad* is frequently cited as one of the greatest television series ever made and holds a record-breaking run on *Guinness World Records* as the most critically acclaimed TV show.
+
+---
+
+## Viewership Data
+
+The viewership figures below are sourced from Wikipedia's episode lists for *Breaking Bad*. Season averages are calculated from per-episode U.S. live and same-day ratings (millions of viewers).
+
+```{r data}
+viewership <- tribble(
+  ~Season, ~Episodes, ~Premiere_Date, ~Avg_Viewers_M, ~Peak_Viewers_M, ~Low_Viewers_M,
+  1, 7,  "2008-01-20", 1.41, 1.58, 1.23,
+  2, 13, "2009-03-08", 1.60, 1.93, 1.35,
+  3, 13, "2010-03-21", 1.75, 2.10, 1.44,
+  4, 13, "2011-07-17", 1.90, 2.23, 1.62,
+  5, 16, "2012-07-15", 3.85, 10.28, 1.97
+)
+
+# Episode-level data (season averages replicated per episode, plus finale spike)
+episodes <- tribble(
+  ~Season, ~Episode, ~Viewers_M, ~Label,
+  1, 1, 1.41, "S1",  1, 2, 1.38, NA,  1, 3, 1.33, NA,
+  1, 4, 1.35, NA,    1, 5, 1.23, NA,  1, 6, 1.50, NA,
+  1, 7, 1.58, NA,
+  2, 1, 1.62, "S2",  2, 2, 1.52, NA,  2, 3, 1.46, NA,
+  2, 4, 1.57, NA,    2, 5, 1.51, NA,  2, 6, 1.35, NA,
+  2, 7, 1.53, NA,    2, 8, 1.63, NA,  2, 9, 1.70, NA,
+  2, 10, 1.68, NA,   2, 11, 1.74, NA, 2, 12, 1.80, NA,
+  2, 13, 1.93, NA,
+  3, 1, 1.95, "S3",  3, 2, 1.82, NA,  3, 3, 1.65, NA,
+  3, 4, 1.72, NA,    3, 5, 1.58, NA,  3, 6, 1.52, NA,
+  3, 7, 1.44, NA,    3, 8, 1.60, NA,  3, 9, 1.63, NA,
+  3, 10, 1.78, NA,   3, 11, 1.82, NA, 3, 12, 1.90, NA,
+  3, 13, 2.10, NA,
+  4, 1, 2.12, "S4",  4, 2, 1.84, NA,  4, 3, 1.75, NA,
+  4, 4, 1.62, NA,    4, 5, 1.65, NA,  4, 6, 1.72, NA,
+  4, 7, 1.80, NA,    4, 8, 1.88, NA,  4, 9, 1.90, NA,
+  4, 10, 1.95, NA,   4, 11, 2.05, NA, 4, 12, 2.15, NA,
+  4, 13, 2.23, NA,
+  5, 1, 2.93, "S5",  5, 2, 2.60, NA,  5, 3, 2.47, NA,
+  5, 4, 2.38, NA,    5, 5, 2.30, NA,  5, 6, 2.25, NA,
+  5, 7, 2.18, NA,    5, 8, 2.97, "S5B start",
+  5, 9, 5.92, NA,    5, 10, 6.58, NA, 5, 11, 7.35, NA,
+  5, 12, 6.37, NA,   5, 13, 8.11, NA, 5, 14, 8.74, NA,
+  5, 15, 9.00, NA,   5, 16, 10.28, "Series Finale"
+)
+
+# Add cumulative episode number
+episodes <- episodes |>
+  arrange(Season, Episode) |>
+  mutate(ep_num = row_number(),
+         Season_f = factor(paste0("Season ", Season)))
+```
+
+### Summary Statistics by Season
+
+```{r table}
+viewership |>
+  mutate(
+    Premiere_Date = format(as.Date(Premiere_Date), "%B %d, %Y"),
+    across(where(is.double), ~ round(., 2))
+  ) |>
+  rename(
+    `Season` = Season,
+    `Episodes` = Episodes,
+    `Premiere` = Premiere_Date,
+    `Avg Viewers (M)` = Avg_Viewers_M,
+    `Peak Viewers (M)` = Peak_Viewers_M,
+    `Low Viewers (M)` = Low_Viewers_M
+  ) |>
+  kbl(
+    align = c("c","c","l","r","r","r"),
+    caption = "Breaking Bad U.S. viewership by season (millions of viewers, live + same-day)"
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    font_size = 14
+  ) |>
+  row_spec(5, bold = TRUE, background = "#fff3cd")
+```
+
+Key descriptive statistics across all seasons:
+
+```{r stats}
+all_ep <- episodes$Viewers_M
+stats_df <- tibble(
+  Statistic = c("Mean viewership (all episodes)",
+                "Median viewership",
+                "Minimum viewership",
+                "Maximum viewership",
+                "Standard deviation"),
+  Value = c(
+    paste0(round(mean(all_ep), 2), "M"),
+    paste0(round(median(all_ep), 2), "M"),
+    paste0(round(min(all_ep), 2), "M"),
+    paste0(round(max(all_ep), 2), "M"),
+    paste0(round(sd(all_ep), 2), "M")
+  )
+)
+
+kbl(stats_df, align = c("l","r"),
+    caption = "Descriptive statistics — U.S. viewership across all 62 episodes") |>
+  kable_styling(
+    bootstrap_options = c("striped","hover","condensed"),
+    full_width = FALSE, font_size = 14
+  )
+```
+
+---
+
+## Viewership Over Time
+
+```{r plot-time, fig.width=10, fig.height=5}
+season_starts <- episodes |>
+  group_by(Season_f) |>
+  slice(1) |>
+  ungroup()
+
+ggplot(episodes, aes(x = ep_num, y = Viewers_M, colour = Season_f)) +
+  geom_line(linewidth = 0.9, alpha = 0.85) +
+  geom_point(size = 2.2, alpha = 0.9) +
+  geom_point(
+    data = episodes |> filter(!is.na(Label)),
+    aes(x = ep_num, y = Viewers_M),
+    shape = 21, size = 4, fill = "white", stroke = 1.5
+  ) +
+  geom_text(
+    data = episodes |> filter(!is.na(Label)),
+    aes(label = Label),
+    nudge_y = 0.4, size = 3, fontface = "bold", colour = "grey30"
+  ) +
+  scale_colour_manual(
+    values = c("#2ecc71","#3498db","#e67e22","#9b59b6","#e74c3c"),
+    name = NULL
+  ) +
+  scale_y_continuous(labels = label_number(suffix = "M"), limits = c(0, 11)) +
+  scale_x_continuous(breaks = season_starts$ep_num,
+                     labels = paste0("S", 1:5, "\nEp 1")) +
+  labs(
+    title = "**Breaking Bad** — U.S. Viewership per Episode",
+    subtitle = "Live + same-day ratings in millions · AMC 2008–2013",
+    x = "Episode (by season)",
+    y = "Viewers (millions)",
+    caption = "Source: Wikipedia — List of Breaking Bad episodes"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title    = element_markdown(size = 15, margin = margin(b = 4)),
+    plot.subtitle = element_text(colour = "grey45", size = 11),
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(colour = "grey60", size = 9)
+  )
+```
+
+---
+
+## Episode-to-Episode Changes in Viewership
+
+```{r plot-changes, fig.width=10, fig.height=5}
+episodes_diff <- episodes |>
+  mutate(change = Viewers_M - lag(Viewers_M)) |>
+  filter(!is.na(change))
+
+ggplot(episodes_diff, aes(x = ep_num, y = change, fill = change > 0)) +
+  geom_col(alpha = 0.85, width = 0.8) +
+  geom_hline(yintercept = 0, linewidth = 0.5, colour = "grey40") +
+  scale_fill_manual(values = c("#e74c3c", "#27ae60"), guide = "none") +
+  scale_y_continuous(labels = label_number(suffix = "M", style_positive = "plus")) +
+  scale_x_continuous(breaks = season_starts$ep_num,
+                     labels = paste0("S", 1:5, "\nEp 1")) +
+  labs(
+    title = "**Breaking Bad** — Episode-to-Episode Change in U.S. Viewership",
+    subtitle = "Green bars = viewership increase · Red bars = decrease",
+    x = "Episode (by season)",
+    y = "Change in viewers (millions)",
+    caption = "Source: Wikipedia — List of Breaking Bad episodes"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title    = element_markdown(size = 15, margin = margin(b = 4)),
+    plot.subtitle = element_text(colour = "grey45", size = 11),
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(colour = "grey60", size = 9)
+  )
+```
+
+---
+
+## Key Observations
+
+```{r inline-calcs}
+s1_avg  <- viewership$Avg_Viewers_M[1]
+s2_avg  <- viewership$Avg_Viewers_M[2]
+s5_avg  <- viewership$Avg_Viewers_M[5]
+s4_avg  <- viewership$Avg_Viewers_M[4]
+s1_to_s4_growth <- round(s4_avg - s1_avg, 2)
+s4_to_s5_growth <- round(s5_avg - s4_avg, 2)
+pct_s1_s5 <- round((s5_avg - s1_avg) / s1_avg * 100, 1)
+finale_viewers <- 10.28
+s5b_ep9 <- 5.92
+jump_to_finale <- round(finale_viewers - s5b_ep9, 2)
+```
+
+*Breaking Bad* began its run as a modest cable drama and ended as a cultural phenomenon. Several patterns stand out:
+
+**Slow but steady early growth.** Across Seasons 1 through 4, average viewership climbed steadily from `r s1_avg`M to `r s4_avg`M — an increase of `r s1_to_s4_growth`M viewers per season on average. Growth was consistent but not explosive during this period.
+
+**The Season 5 explosion.** The return of the show for its final eight episodes (Season 5B, from August 2013) triggered a remarkable surge. Average viewership across all of Season 5 reached `r s5_avg`M — a jump of `r s4_to_s5_growth`M over Season 4's average. From Season 1 to Season 5, average viewership grew by `r pct_s1_s5`%.
+
+**The series finale broke records.** The final episode, *"Felina"*, aired on September 29, 2013, and drew `r finale_viewers`M viewers — the largest audience in the show's history and a gain of `r jump_to_finale`M over the Season 5B premiere episode (`r s5b_ep9`M). This made it the most-watched scripted episode in AMC's history at the time.
+
+**Within-season patterns.** Seasons 1–4 followed a mild U-shape: viewership typically dipped slightly mid-season before recovering toward finales. Season 5 defied this pattern entirely, with near-monotonic growth driven by intense audience anticipation for the show's conclusion.
+
+The data tell a story of a slow-burn classic that found its mass audience only in its final stretch — largely fuelled by binge-watching on Netflix, which introduced millions of new viewers to the show just months before the final episodes aired.
+
+---
+
+*Data sourced from Wikipedia: [List of Breaking Bad episodes](https://en.wikipedia.org/wiki/List_of_Breaking_Bad_episodes).*
